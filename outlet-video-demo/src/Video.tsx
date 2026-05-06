@@ -1,14 +1,5 @@
 import React from 'react';
-import {
-  AbsoluteFill,
-  Sequence,
-  useCurrentFrame,
-  interpolate,
-  delayRender,
-  continueRender,
-  cancelRender,
-  staticFile,
-} from 'remotion';
+import {AbsoluteFill, Sequence, useCurrentFrame, interpolate} from 'remotion';
 import {Scene01Current} from './scenes/Scene01Current';
 import {Scene02Overall} from './scenes/Scene02Overall';
 import {Scene03Storefront} from './scenes/Scene03Storefront';
@@ -18,45 +9,6 @@ import {Scene05Ending} from './scenes/Scene05Ending';
 const TRANSITION_FRAMES = 24;
 const SCENE_FRAMES = 90;
 
-const IMAGE_PATHS = [
-  '/assets/scene01_factory_current.jpg',
-  '/assets/scene02_outlet_overall.png',
-  '/assets/scene03_storefront_closeup.png',
-  '/assets/scene04_store_interior.png',
-];
-
-const ImagePreloader: React.FC = () => {
-  const [handle] = React.useState(() => delayRender('Preloading outlet video images'));
-
-  React.useEffect(() => {
-    let cancelled = false;
-
-    Promise.all(
-      IMAGE_PATHS.map(
-        (path) =>
-          new Promise<void>((resolve, reject) => {
-            const img = new Image();
-            img.onload = () => resolve();
-            img.onerror = () => reject(new Error(`Failed to load image: ${path}`));
-            img.src = staticFile(path);
-          }),
-      ),
-    )
-      .then(() => {
-        if (!cancelled) continueRender(handle);
-      })
-      .catch((error) => {
-        if (!cancelled) cancelRender(error);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [handle]);
-
-  return null;
-};
-
 const FadeIn: React.FC<{children: React.ReactNode; blur?: boolean}> = ({children, blur = true}) => {
   const frame = useCurrentFrame();
   const opacity = interpolate(frame, [0, TRANSITION_FRAMES], [0, 1], {
@@ -64,7 +16,7 @@ const FadeIn: React.FC<{children: React.ReactNode; blur?: boolean}> = ({children
     extrapolateRight: 'clamp',
   });
   const blurPx = blur
-    ? interpolate(frame, [0, TRANSITION_FRAMES], [18, 0], {
+    ? interpolate(frame, [0, TRANSITION_FRAMES], [10, 0], {
         extrapolateLeft: 'clamp',
         extrapolateRight: 'clamp',
       })
@@ -80,7 +32,7 @@ const WipeTransition: React.FC<{from: number}> = ({from}) => {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
-  const opacity = interpolate(local, [0, 8, TRANSITION_FRAMES], [0, 0.36, 0], {
+  const opacity = interpolate(local, [0, 8, TRANSITION_FRAMES], [0, 0.28, 0], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
@@ -106,8 +58,6 @@ const WipeTransition: React.FC<{from: number}> = ({from}) => {
 export const OutletVideo: React.FC = () => {
   return (
     <AbsoluteFill style={{backgroundColor: '#050505'}}>
-      <ImagePreloader />
-
       <Sequence from={0} durationInFrames={SCENE_FRAMES}>
         <Scene01Current />
       </Sequence>
