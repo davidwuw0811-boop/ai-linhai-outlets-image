@@ -1,5 +1,5 @@
 import React from 'react';
-import {AbsoluteFill, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 
 type SceneBaseProps = {
   image: string;
@@ -71,17 +71,19 @@ export const SceneBase: React.FC<SceneBaseProps> = ({
   });
 
   const left = align === 'left' ? 108 : 0;
+  const assetUrl = staticFile(normalizeAssetPath(image));
 
   return (
     <AbsoluteFill style={{backgroundColor: '#080808', overflow: 'hidden'}}>
-      <Img
-        src={staticFile(normalizeAssetPath(image))}
+      <AbsoluteFill
         style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover',
+          backgroundImage: `url("${assetUrl}")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center center',
+          backgroundRepeat: 'no-repeat',
           transform: `scale(${scale + cameraSpring * 0.015}) translate(${x}px, ${y}px)`,
           filter: 'contrast(1.07) saturate(1.05)',
+          willChange: 'transform',
         }}
       />
 
