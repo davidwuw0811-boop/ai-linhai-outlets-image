@@ -14,6 +14,8 @@ type SceneBaseProps = {
   badge?: string;
 };
 
+const normalizeAssetPath = (path: string) => path.replace(/^\//, '');
+
 export const SceneBase: React.FC<SceneBaseProps> = ({
   image,
   title,
@@ -73,7 +75,7 @@ export const SceneBase: React.FC<SceneBaseProps> = ({
   return (
     <AbsoluteFill style={{backgroundColor: '#080808', overflow: 'hidden'}}>
       <Img
-        src={staticFile(image)}
+        src={staticFile(normalizeAssetPath(image))}
         style={{
           width: '100%',
           height: '100%',
