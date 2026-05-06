@@ -1,35 +1,119 @@
 import React from 'react';
-import {AbsoluteFill, Sequence, useCurrentFrame, interpolate} from 'remotion';
+import {
+  AbsoluteFill,
+  Sequence,
+  useCurrentFrame,
+  interpolate,
+  delayRender,
+  continueRender,
+  cancelRender,
+  staticFile,
+} from 'remotion';
 import {Scene01Current} from './scenes/Scene01Current';
 import {Scene02Overall} from './scenes/Scene02Overall';
 import {Scene03Storefront} from './scenes/Scene03Storefront';
 import {Scene04Interior} from './scenes/Scene04Interior';
 import {Scene05Ending} from './scenes/Scene05Ending';
 
-const TRANSITION_FRAMES = 18;
+const TRANSITION_FRAMES = 24;
 const SCENE_FRAMES = 90;
 
-const FadeIn: React.FC<{children: React.ReactNode}> = ({children}) => {
-  // IMPORTANT: useCurrentFrame() is local to this Sequence.
-  // Therefore fade timing must start at 0, not at the global timeline frame.
+const IMAGE_PATHS = [
+  '/assets/scene01_factory_current.jpg',
+  '/assets/scene02_outlet_overall.png',
+  '/assets/scene03_storefront_closeup.png',
+  '/assets/scene04_store_interior.png',
+];
+
+const ImagePreloader: React.FC = () => {
+  const [handle] = React.useState(() => delayRender('Preloading outlet video images'));
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    Promise.all(
+      IMAGE_PATHS.map(
+        (path) =>
+          new Promise<void>((resolve, reject) => {
+            const img = new Image();
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error(`Failed to load image: ${path}`));
+            img.src = staticFile(path);
+          }),
+      ),
+    )
+      .then(() => {
+        if (!cancelled) continueRender(handle);
+      })
+      .catch((error) => {
+        if (!cancelled) cancelRender(error);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [handle]);
+
+  return null;
+};
+
+const FadeIn: React.FC<{children: React.ReactNode; blur?: boolean}> = ({children, blur = true}) => {
   const frame = useCurrentFrame();
   const opacity = interpolate(frame, [0, TRANSITION_FRAMES], [0, 1], {
     extrapolateLeft: 'clamp',
     extrapolateRight: 'clamp',
   });
+  const blurPx = blur
+    ? interpolate(frame, [0, TRANSITION_FRAMES], [18, 0], {
+        extrapolateLeft: 'clamp',
+        extrapolateRight: 'clamp',
+      })
+    : 0;
 
-  return <AbsoluteFill style={{opacity}}>{children}</AbsoluteFill>;
+  return <AbsoluteFill style={{opacity, filter: `blur(${blurPx}px)`}}>{children}</AbsoluteFill>;
+};
+
+const WipeTransition: React.FC<{from: number}> = ({from}) => {
+  const frame = useCurrentFrame();
+  const local = frame - from;
+  const width = interpolate(local, [0, TRANSITION_FRAMES], [0, 2200], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+  const opacity = interpolate(local, [0, 8, TRANSITION_FRAMES], [0, 0.36, 0], {
+    extrapolateLeft: 'clamp',
+    extrapolateRight: 'clamp',
+  });
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        top: 0,
+        bottom: 0,
+        left: 0,
+        width,
+        opacity,
+        background: 'linear-gradient(90deg, rgba(218,188,111,0.92), rgba(255,255,255,0.22), rgba(255,255,255,0))',
+        transform: 'skewX(-10deg)',
+        transformOrigin: 'left center',
+        pointerEvents: 'none',
+      }}
+    />
+  );
 };
 
 export const OutletVideo: React.FC = () => {
   return (
     <AbsoluteFill style={{backgroundColor: '#050505'}}>
+      <ImagePreloader />
+
       <Sequence from={0} durationInFrames={SCENE_FRAMES}>
         <Scene01Current />
       </Sequence>
 
       <Sequence from={SCENE_FRAMES - TRANSITION_FRAMES} durationInFrames={SCENE_FRAMES + TRANSITION_FRAMES}>
-        <FadeIn>
+        <FadeIn blur={false}>
           <Scene02Overall />
         </FadeIn>
       </Sequence>
@@ -51,6 +135,11 @@ export const OutletVideo: React.FC = () => {
           <Scene05Ending />
         </FadeIn>
       </Sequence>
+
+      <WipeTransition from={SCENE_FRAMES - TRANSITION_FRAMES} />
+      <WipeTransition from={SCENE_FRAMES * 2 - TRANSITION_FRAMES} />
+      <WipeTransition from={SCENE_FRAMES * 3 - TRANSITION_FRAMES} />
+      <WipeTransition from={SCENE_FRAMES * 4 - TRANSITION_FRAMES} />
     </AbsoluteFill>
   );
 };
