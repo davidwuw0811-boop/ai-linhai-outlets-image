@@ -15,6 +15,7 @@ type SceneBaseProps = {
 };
 
 const normalizeAssetPath = (path: string) => path.replace(/^\//, '');
+const chineseFontStack = 'Noto Sans CJK SC, Noto Sans SC, WenQuanYi Micro Hei, Microsoft YaHei, PingFang SC, Heiti SC, Arial Unicode MS, sans-serif';
 
 export const SceneBase: React.FC<SceneBaseProps> = ({
   image,
@@ -122,7 +123,7 @@ export const SceneBase: React.FC<SceneBaseProps> = ({
           width: align === 'left' ? 980 : '100%',
           color: '#fff',
           textAlign: align,
-          fontFamily: 'Noto Sans SC, Microsoft YaHei, sans-serif',
+          fontFamily: chineseFontStack,
           textShadow: '0 10px 34px rgba(0,0,0,0.55)',
         }}
       >
